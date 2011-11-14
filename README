@@ -1,0 +1,13 @@
+
+
+This archive contains the distribution Net-Statsd,
+version 0.01:
+
+  Sends statistics to the stats daemon over UDP
+
+This software is copyright (c) 2011 by Cosimo Streppone.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+
