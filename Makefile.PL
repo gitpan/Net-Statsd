@@ -9,24 +9,24 @@ use ExtUtils::MakeMaker 6.30;
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Sends statistics to the stats daemon over UDP',
-  'AUTHOR' => 'Cosimo Streppone <cosimo@cpan.org>',
-  'BUILD_REQUIRES' => {
-    'Test::More' => '0'
+  "ABSTRACT" => "Sends statistics to the stats daemon over UDP",
+  "AUTHOR" => "Cosimo Streppone <cosimo\@cpan.org>",
+  "BUILD_REQUIRES" => {
+    "Test::More" => 0
   },
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.30'
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'Net-Statsd',
-  'EXE_FILES' => [],
-  'LICENSE' => 'perl',
-  'NAME' => 'Net::Statsd',
-  'PREREQ_PM' => {
-    'IO::Socket' => '0'
+  "DISTNAME" => "Net-Statsd",
+  "EXE_FILES" => [],
+  "LICENSE" => "perl",
+  "NAME" => "Net::Statsd",
+  "PREREQ_PM" => {
+    "IO::Socket" => 0
   },
-  'VERSION' => '0.01',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "VERSION" => "0.02",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 
