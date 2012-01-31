@@ -4,7 +4,7 @@
       "Cosimo Streppone <cosimo@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.300005, CPAN::Meta::Converter version 2.102400",
+   "generated_by" : "Dist::Zilla version 4.300005, CPAN::Meta::Converter version 2.113640",
    "license" : [
       "perl_5"
    ],
@@ -42,6 +42,6 @@
          "web" : "http://github.com/cosimo/perl5-net-statsd"
       }
    },
-   "version" : "0.02"
+   "version" : "0.03"
 }
 

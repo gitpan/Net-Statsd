@@ -1,6 +1,6 @@
 package Net::Statsd;
 {
-  $Net::Statsd::VERSION = '0.02';
+  $Net::Statsd::VERSION = '0.03';
 }
 
 # ABSTRACT: Sends statistics to the stats daemon over UDP
@@ -76,8 +76,6 @@ sub update_stats {
 sub _sample_data {
     my ($data, $sample_rate) = @_;
 
-    my $sampled_data;
-
     if (! $data || ref $data ne 'HASH') {
         Carp::croak("No data?");
     }
@@ -86,16 +84,27 @@ sub _sample_data {
         $sample_rate = 1;
     }
 
-    if ($sample_rate < 1) {
-        if (rand() <= $sample_rate) {
-            while (my ($stat, $value) = each %{ $data }) {
-                $sampled_data->{$stat} = sprintf "%s|@%s", $value, $sample_rate;
-            }
-        }
+    # Sample rate > 1 doesn't make sense though
+    if ($sample_rate >= 1) {
+        return $data;
     }
 
-    else {
-        $sampled_data = $data;
+    my $sampled_data;
+
+    # Perform sampling here, so that clients using Net::Statsd
+    # don't have to do it every time. This is the same
+    # implementation criteria used in the other statsd client libs
+    #
+    # If rand() doesn't trigger, then no data will be sent
+    # to the statsd server, which is what we want.
+
+    if (rand() <= $sample_rate) {
+        while (my ($stat, $value) = each %{ $data }) {
+            # Uglier, but if there's no data to be sampled,
+            # we get a clean undef as returned value
+            $sampled_data ||= {};
+            $sampled_data->{$stat} = sprintf "%s|@%s", $value, $sample_rate;
+        }
     }
 
     return $sampled_data;
@@ -106,15 +115,22 @@ sub send {
     my ($data, $sample_rate) = @_;
 
     my $sampled_data = _sample_data($data, $sample_rate);
+
+    # No sampled_data can happen when:
+    # 1) No $data came in
+    # 2) Sample rate was low enough that we don't want to send events
     if (! $sampled_data) {
-        Carp::croak("No (sampled) data to be sent?");
+        return;
     }
 
     my $udp_sock = IO::Socket::INET->new(
         Proto    => 'udp',
         PeerAddr => $HOST,
         PeerPort => $PORT,
-    ) or return;
+    ) or do {
+        # warn perhaps?
+        return
+    };
 
     # We don't want to die if Net::Statsd::send() doesn't work...
     # We could though:
@@ -124,7 +140,7 @@ sub send {
     my $all_sent = 1;
 
     for my $stat (keys %{ $sampled_data }) {
-        my $value = $data->{$stat};
+        my $value = $sampled_data->{$stat};
         my $packet = "$stat:$value";
         $udp_sock->send($packet);
         # XXX If you want warnings...
@@ -156,7 +172,7 @@ Net::Statsd - Sends statistics to the stats daemon over UDP
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 SYNOPSIS
 
@@ -178,9 +194,11 @@ version 0.02
     my $start_time = [ Time::HiRes::gettimeofday ];
 
     # do the complex database query
+    # note: time value sent to timing should
+    # be in milliseconds.
     Net::Statsd::timing(
         'database.complexquery',
-        Time::HiRes::tv_interval($start_time)
+        Time::HiRes::tv_interval($start_time) * 1000
     );
 
 =head1 DESCRIPTION
@@ -217,12 +235,23 @@ just after including the C<Net::Statsd> module.
 
 Net::Statsd - Perl client for Etsy's statsd daemon
 
+=head1 ABOUT SAMPLING
+
+A note about sample rate: A sample rate of < 1 instructs this
+library to send only the specified percentage of the samples to
+the server. As such, the application code should call this module
+for every occurence of each metric and allow this library to
+determine which specific measurements to deliver, based on the
+sample_rate value. (e.g. a sample rate of 0.5 would indicate that
+approximately only half of the metrics given to this module would
+actually be sent to statsd).
+
 =head1 FUNCTIONS
 
 =head2 C<timing($stat, $time, $sample_rate = 1)>
 
 Log timing information.
-Time is assumed to be in milliseconds (ms).
+B<Time is assumed to be in milliseconds (ms)>.
 
     Net::Statsd::timing('some.time', 500);
 
