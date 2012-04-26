@@ -1,6 +1,6 @@
 package Net::Statsd;
 {
-  $Net::Statsd::VERSION = '0.03';
+  $Net::Statsd::VERSION = '0.04';
 }
 
 # ABSTRACT: Sends statistics to the stats daemon over UDP
@@ -111,6 +111,20 @@ sub _sample_data {
 }
 
 
+sub gauge {
+    my ($stat, $gauge) = @_;
+
+    $gauge = 0 unless defined $gauge;
+
+    # Didn't use '%d' because values might be floats
+    my $stats = {
+        $stat => sprintf "%s|g", $gauge
+    };
+
+    return Net::Statsd::send($stats, 1);
+}
+
+
 sub send {
     my ($data, $sample_rate) = @_;
 
@@ -172,7 +186,7 @@ Net::Statsd - Sends statistics to the stats daemon over UDP
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 SYNOPSIS
 
@@ -308,6 +322,12 @@ If C<$sample_rate = 0.2>, then every metric value will be I<marked>
 with the given sample rate, so the Statsd server will automatically
 scale it. For example, with a sample rate of 0.2, the metric values
 will be multiplied by 5.
+
+=head2 C<gauge($stat, $gauge)>
+
+Log arbitrary values.
+
+    Net::Statsd::gauge('some.thing', 15);
 
 =head2 C<send(\%data, $sample_rate = 1)>
 
