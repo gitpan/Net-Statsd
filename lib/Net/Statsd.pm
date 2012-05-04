@@ -1,6 +1,6 @@
 package Net::Statsd;
 {
-  $Net::Statsd::VERSION = '0.04';
+  $Net::Statsd::VERSION = '0.05';
 }
 
 # ABSTRACT: Sends statistics to the stats daemon over UDP
@@ -17,14 +17,14 @@ our $PORT = 8125;
 
 
 sub timing {
-    my ($stat, $time, $sample_rate) = @_;
+    my ($name, $time, $sample_rate) = @_;
 
     if (! defined $sample_rate) {
         $sample_rate = 1;
     }
 
     my $stats = {
-        $stat => sprintf "%d|ms", $time
+        $name => sprintf "%d|ms", $time
     };
 
     return Net::Statsd::send($stats, $sample_rate);
@@ -112,13 +112,13 @@ sub _sample_data {
 
 
 sub gauge {
-    my ($stat, $gauge) = @_;
+    my ($name, $value) = @_;
 
-    $gauge = 0 unless defined $gauge;
+    $value = 0 unless defined $value;
 
     # Didn't use '%d' because values might be floats
     my $stats = {
-        $stat => sprintf "%s|g", $gauge
+        $name => sprintf "%s|g", $value
     };
 
     return Net::Statsd::send($stats, 1);
@@ -167,15 +167,7 @@ sub send {
     return $all_sent;
 }
 
-unless (caller) {
-    Net::Statsd::increment('test.counter1');
-    Net::Statsd::increment('test.counter2');
-    Net::Statsd::decrement('test.counter1');
-    Net::Statsd::decrement('test.counter2');
-}
-
 1;
-
 
 __END__
 =pod
@@ -186,7 +178,7 @@ Net::Statsd - Sends statistics to the stats daemon over UDP
 
 =head1 VERSION
 
-version 0.04
+version 0.05
 
 =head1 SYNOPSIS
 
@@ -214,6 +206,11 @@ version 0.04
         'database.complexquery',
         Time::HiRes::tv_interval($start_time) * 1000
     );
+
+    #
+    # Log metric values
+    #
+    Net::Statsd::gauge('core.temperature' => 55);
 
 =head1 DESCRIPTION
 
@@ -262,14 +259,16 @@ actually be sent to statsd).
 
 =head1 FUNCTIONS
 
-=head2 C<timing($stat, $time, $sample_rate = 1)>
+=head2 C<timing($name, $time, $sample_rate = 1)>
 
 Log timing information.
 B<Time is assumed to be in milliseconds (ms)>.
 
-    Net::Statsd::timing('some.time', 500);
+    Net::Statsd::timing('some.timer', 500);
 
-=head2 C<increment($stats, $sample_rate=1)>
+=head2 C<increment($counter, $sample_rate=1)>
+
+=head2 C<increment(\@counter, $sample_rate=1)>
 
 Increments one or more stats counters
 
@@ -286,7 +285,7 @@ you can B<pass an array reference>:
 
 B<You can also use "inc()" instead of "increment()" to type less>.
 
-=head2 C<decrement($stats, $sample_rate=1)>
+=head2 C<decrement($counter, $sample_rate=1)>
 
 Same as increment, but decrements. Yay.
 
@@ -323,11 +322,11 @@ with the given sample rate, so the Statsd server will automatically
 scale it. For example, with a sample rate of 0.2, the metric values
 will be multiplied by 5.
 
-=head2 C<gauge($stat, $gauge)>
+=head2 C<gauge($name, $value)>
 
-Log arbitrary values.
+Log arbitrary values, as a temperature, or server load.
 
-    Net::Statsd::gauge('some.thing', 15);
+    Net::Statsd::gauge('core.temperature', 55);
 
 =head2 C<send(\%data, $sample_rate = 1)>
 
