@@ -1,6 +1,6 @@
 package Net::Statsd;
 {
-  $Net::Statsd::VERSION = '0.05';
+  $Net::Statsd::VERSION = '0.06';
 }
 
 # ABSTRACT: Sends statistics to the stats daemon over UDP
@@ -73,44 +73,6 @@ sub update_stats {
 }
 
 
-sub _sample_data {
-    my ($data, $sample_rate) = @_;
-
-    if (! $data || ref $data ne 'HASH') {
-        Carp::croak("No data?");
-    }
-
-    if (! defined $sample_rate) {
-        $sample_rate = 1;
-    }
-
-    # Sample rate > 1 doesn't make sense though
-    if ($sample_rate >= 1) {
-        return $data;
-    }
-
-    my $sampled_data;
-
-    # Perform sampling here, so that clients using Net::Statsd
-    # don't have to do it every time. This is the same
-    # implementation criteria used in the other statsd client libs
-    #
-    # If rand() doesn't trigger, then no data will be sent
-    # to the statsd server, which is what we want.
-
-    if (rand() <= $sample_rate) {
-        while (my ($stat, $value) = each %{ $data }) {
-            # Uglier, but if there's no data to be sampled,
-            # we get a clean undef as returned value
-            $sampled_data ||= {};
-            $sampled_data->{$stat} = sprintf "%s|@%s", $value, $sample_rate;
-        }
-    }
-
-    return $sampled_data;
-}
-
-
 sub gauge {
     my ($name, $value) = @_;
 
@@ -167,6 +129,44 @@ sub send {
     return $all_sent;
 }
 
+
+sub _sample_data {
+    my ($data, $sample_rate) = @_;
+
+    if (! $data || ref $data ne 'HASH') {
+        Carp::croak("No data?");
+    }
+
+    if (! defined $sample_rate) {
+        $sample_rate = 1;
+    }
+
+    # Sample rate > 1 doesn't make sense though
+    if ($sample_rate >= 1) {
+        return $data;
+    }
+
+    my $sampled_data;
+
+    # Perform sampling here, so that clients using Net::Statsd
+    # don't have to do it every time. This is the same
+    # implementation criteria used in the other statsd client libs
+    #
+    # If rand() doesn't trigger, then no data will be sent
+    # to the statsd server, which is what we want.
+
+    if (rand() <= $sample_rate) {
+        while (my ($stat, $value) = each %{ $data }) {
+            # Uglier, but if there's no data to be sampled,
+            # we get a clean undef as returned value
+            $sampled_data ||= {};
+            $sampled_data->{$stat} = sprintf "%s|@%s", $value, $sample_rate;
+        }
+    }
+
+    return $sampled_data;
+}
+
 1;
 
 __END__
@@ -178,7 +178,7 @@ Net::Statsd - Sends statistics to the stats daemon over UDP
 
 =head1 VERSION
 
-version 0.05
+version 0.06
 
 =head1 SYNOPSIS
 
@@ -306,6 +306,18 @@ equivalent to:
 A sampling rate less than 1 means only update the stats
 every x number of times (0.1 = 10% of the times).
 
+=head2 C<gauge($name, $value)>
+
+Log arbitrary values, as a temperature, or server load.
+
+    Net::Statsd::gauge('core.temperature', 55);
+
+=head2 C<send(\%data, $sample_rate = 1)>
+
+Squirt the metrics over UDP.
+
+    Net::Statsd::send({ 'some.int' => 1 });
+
 =head2 C<_sample_data(\%data, $sample_rate = 1)>
 
 B<This method is used internally, it's not part of the public interface.>
@@ -321,18 +333,6 @@ If C<$sample_rate = 0.2>, then every metric value will be I<marked>
 with the given sample rate, so the Statsd server will automatically
 scale it. For example, with a sample rate of 0.2, the metric values
 will be multiplied by 5.
-
-=head2 C<gauge($name, $value)>
-
-Log arbitrary values, as a temperature, or server load.
-
-    Net::Statsd::gauge('core.temperature', 55);
-
-=head2 C<send(\%data, $sample_rate = 1)>
-
-Squirt the metrics over UDP.
-
-    Net::Statsd::send({ 'some.int' => 1 });
 
 =head1 AUTHOR
 
