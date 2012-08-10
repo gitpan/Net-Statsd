@@ -1,6 +1,6 @@
 package Net::Statsd;
 {
-  $Net::Statsd::VERSION = '0.06';
+  $Net::Statsd::VERSION = '0.07';
 }
 
 # ABSTRACT: Sends statistics to the stats daemon over UDP
@@ -178,7 +178,7 @@ Net::Statsd - Sends statistics to the stats daemon over UDP
 
 =head1 VERSION
 
-version 0.06
+version 0.07
 
 =head1 SYNOPSIS
 

@@ -32,11 +32,6 @@ BEGIN {
 use lib $dirname;
 use MockServer;
 
-BEGIN {
-    $Net::Statsd::HOST = 'localhost';
-    $Net::Statsd::PORT = MockServer::PORT();
-}
-
 note <<"DESCRIPTION";
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 These test verify basic operation of the statsd client
@@ -44,7 +39,11 @@ by validating the udp messages sent to a mock server
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 DESCRIPTION
 
-MockServer::start();
+# Mock server will start on any available unprivileged port
+$Net::Statsd::PORT = MockServer::start();
+
+note "Mock server started on localhost:${Net::Statsd::PORT}";
+
 my $msgs;
 
 Net::Statsd::timing('test.timer', 345);
