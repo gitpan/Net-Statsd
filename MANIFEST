@@ -7,6 +7,7 @@ META.yml
 Makefile.PL
 README
 README.pod
+benchmark.pl
 dist.ini
 lib/Net/Statsd.pm
 t/000-load.t

@@ -1,7 +1,7 @@
 
 
 This archive contains the distribution Net-Statsd,
-version 0.07:
+version 0.08:
 
   Sends statistics to the stats daemon over UDP
 
